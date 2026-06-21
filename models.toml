@@ -1,0 +1,50 @@
+# ce-infer model registry (default clinical models).
+#
+# This manifest maps logical model ids to quantized GGUF objects. It is content-addressed and
+# distributed as a CE blob. WEIGHTS ARE NOT BUNDLED: each model's `gguf_object_cid` is empty until an
+# operator publishes the GGUF with `ce-infer models publish <file.gguf> --id <id>`, which uploads it
+# (`put_object` -> CID) and fills in the CID here. Until then a model is "declared but unavailable"
+# and the worker falls back to the deterministic mock backend (so the routing path is testable).
+#
+# The registry picks the LARGEST chat model whose floor fits a node's tier (see crates/ce-infer-core
+# probe.rs SELF-TIER RULE). Admins may add/edit entries; ids must stay stable (clients send them).
+
+version = 1
+
+[[models]]
+id = "clinical-chat-8b"
+gguf_object_cid = ""        # publish to fill in
+quant = "Q4_K_M"            # ~4.5 GB
+ctx = 8192
+ram_min_mb = 6000           # fits CpuLow (8 GB) and up
+vram_min_mb = 0
+role = "chat"
+
+[[models]]
+id = "clinical-chat-13b"
+gguf_object_cid = ""
+quant = "Q4_K_M"            # ~7.8 GB
+ctx = 8192
+ram_min_mb = 12000          # CpuHigh (>=24 GB RAM) ...
+vram_min_mb = 10000         # ... or GpuMid (>=10 GB VRAM)
+role = "chat"
+
+[[models]]
+id = "code-7b"
+gguf_object_cid = ""
+quant = "Q4_K_M"
+ctx = 16384
+ram_min_mb = 6000
+vram_min_mb = 0
+role = "code"
+
+[[models]]
+# v2 sharding target — only a GpuHeavy node runs it whole (pipeline-parallel for the rest is in the
+# experimental ce-infer-shard crate, feature `shard`, OFF by default).
+id = "clinical-34b"
+gguf_object_cid = ""
+quant = "Q4_K_M"            # ~20 GB
+ctx = 8192
+ram_min_mb = 40000
+vram_min_mb = 22000
+role = "chat"

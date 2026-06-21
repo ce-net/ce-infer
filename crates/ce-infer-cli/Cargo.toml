@@ -1,0 +1,26 @@
+[package]
+name = "ce-infer-cli"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+description = "ce-infer — ops CLI: probe, models pull/publish, status, audit export, grant helpers."
+
+[[bin]]
+name = "ce-infer"
+path = "src/main.rs"
+
+[dependencies]
+ce-infer-core.workspace = true
+ce-rs.workspace = true
+ce-cap.workspace = true
+ce-identity.workspace = true
+anyhow.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+hex.workspace = true
+clap.workspace = true
+tokio.workspace = true

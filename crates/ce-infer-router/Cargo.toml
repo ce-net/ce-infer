@@ -1,0 +1,44 @@
+[package]
+name = "ce-infer-router"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+description = "ce-infer-router — OpenAI-compatible front door + smart mesh load balancer for ce-infer workers."
+
+[[bin]]
+name = "ce-infer-router"
+path = "src/main.rs"
+
+[lib]
+name = "ce_infer_router"
+path = "src/lib.rs"
+
+[dependencies]
+ce-infer-core.workspace = true
+ce-rs.workspace = true
+ce-cap.workspace = true
+ce-identity.workspace = true
+anyhow.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+hex.workspace = true
+clap.workspace = true
+tokio.workspace = true
+axum.workspace = true
+futures.workspace = true
+async-stream = "0.3"
+sha2.workspace = true
+
+[dev-dependencies]
+reqwest.workspace = true
+ce-identity.workspace = true
+ce-cap.workspace = true
+serde_json.workspace = true
+hex.workspace = true
+anyhow.workspace = true
+futures.workspace = true
+tokio.workspace = true

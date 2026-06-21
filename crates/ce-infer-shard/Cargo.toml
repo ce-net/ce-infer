@@ -1,0 +1,30 @@
+[package]
+name = "ce-infer-shard"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+description = "ce-infer-shard (v2, EXPERIMENTAL, feature `shard`, OFF by default) — pipeline-parallel scaffold for models too big for a single node. NOT wired into v1 routing."
+
+[lib]
+name = "ce_infer_shard"
+path = "src/lib.rs"
+
+[features]
+default = []
+# The whole crate's production surface is gated behind this feature. Off by default: v1 ships
+# without sharding. `cargo build --features shard` (or `-p ce-infer-shard --features shard`) compiles
+# the experimental pipeline-parallel path.
+shard = []
+
+[dependencies]
+ce-infer-core.workspace = true
+ce-rs.workspace = true
+ce-cap.workspace = true
+ce-identity.workspace = true
+anyhow.workspace = true
+tracing.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+hex.workspace = true

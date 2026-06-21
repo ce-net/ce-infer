@@ -1,0 +1,28 @@
+[package]
+name = "ce-infer-core"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+description = "Shared types for ce-infer: hardware probe, model registry, capability abilities, audit."
+
+[lib]
+name = "ce_infer_core"
+path = "src/lib.rs"
+
+[dependencies]
+ce-rs.workspace = true
+ce-cap.workspace = true
+ce-identity.workspace = true
+anyhow.workspace = true
+tracing.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+toml.workspace = true
+hex.workspace = true
+sha2.workspace = true
+sysinfo.workspace = true
+
+[dev-dependencies]
+tokio.workspace = true

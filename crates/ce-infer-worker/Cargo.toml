@@ -1,0 +1,33 @@
+[package]
+name = "ce-infer-worker"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+description = "ce-infer-worker — the per-node inference server: pulls a GGUF over CE blobs, runs llama.cpp behind a loopback OpenAI endpoint, serves capability-gated mesh requests."
+
+[[bin]]
+name = "ce-infer-worker"
+path = "src/main.rs"
+
+[dependencies]
+ce-infer-core.workspace = true
+ce-rs.workspace = true
+ce-cap.workspace = true
+ce-identity.workspace = true
+anyhow.workspace = true
+tracing.workspace = true
+tracing-subscriber.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+hex.workspace = true
+sha2.workspace = true
+clap.workspace = true
+tokio.workspace = true
+reqwest.workspace = true
+futures.workspace = true
+
+[dev-dependencies]
+axum.workspace = true
+serde.workspace = true
