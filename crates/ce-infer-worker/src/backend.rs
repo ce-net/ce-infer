@@ -159,7 +159,11 @@ impl LlamaServer {
     #[allow(dead_code)] // operator/test entry point; not used on the default startup path.
     pub fn attach(port: u16) -> Result<LlamaServer> {
         // A dummy child that exits immediately so Drop is a no-op-ish kill of nothing meaningful.
-        let child = std::process::Command::new(detached_noop_bin())
+        // On Windows a bare `cmd` opens an interactive shell that never exits, so we always pass
+        // explicit "exit now" arguments per platform rather than spawning a bare binary.
+        let (bin, args) = noop_child_cmd();
+        let child = std::process::Command::new(bin)
+            .args(args)
             .stdout(std::process::Stdio::null())
             .stderr(std::process::Stdio::null())
             .spawn()
@@ -218,10 +222,12 @@ impl Drop for LlamaServer {
     }
 }
 
-/// A platform no-op binary used by `attach` for the placeholder child handle.
+/// A platform command + args that spawns a child which exits immediately, used by `attach` for the
+/// placeholder child handle. On Windows `cmd /c exit` returns at once; a bare `cmd` would open an
+/// interactive shell that never exits and would hang `Drop`. On unix `true` exits with success.
 #[allow(dead_code)] // paired with `attach`.
-fn detached_noop_bin() -> &'static str {
-    if cfg!(windows) { "cmd" } else { "true" }
+fn noop_child_cmd() -> (&'static str, &'static [&'static str]) {
+    if cfg!(windows) { ("cmd", &["/C", "exit"]) } else { ("true", &[]) }
 }
 
 #[cfg(test)]

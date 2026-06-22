@@ -80,9 +80,24 @@ pub fn load_roots() -> Vec<[u8; 32]> {
         .collect()
 }
 
-/// Best-effort home directory (no extra dependency): `$HOME`, else `/tmp`.
+/// Best-effort home directory (no extra dependency). On unix this is `$HOME`; on Windows it is
+/// `%USERPROFILE%` (then `%HOMEDRIVE%%HOMEPATH%`), since `$HOME` is normally unset there. Falls back
+/// to the OS temp directory if none is set, so a path is always produced without panicking.
 fn home_dir() -> PathBuf {
-    std::env::var_os("HOME").map(PathBuf::from).unwrap_or_else(|| PathBuf::from("/tmp"))
+    #[cfg(windows)]
+    {
+        if let Some(p) = std::env::var_os("USERPROFILE") {
+            return PathBuf::from(p);
+        }
+        if let (Some(drive), Some(path)) =
+            (std::env::var_os("HOMEDRIVE"), std::env::var_os("HOMEPATH"))
+        {
+            let mut s = drive;
+            s.push(path);
+            return PathBuf::from(s);
+        }
+    }
+    std::env::var_os("HOME").map(PathBuf::from).unwrap_or_else(std::env::temp_dir)
 }
 
 #[cfg(test)]

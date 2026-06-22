@@ -34,14 +34,22 @@ use std::sync::Arc;
 use std::time::Duration;
 use tracing::{error, info, warn};
 
+/// The default engine binary name per platform. `Command::new` resolves a bare name against PATH
+/// (appending `.exe` on Windows), but we name it explicitly so logs and `--help` are unambiguous.
+const fn default_engine() -> &'static str {
+    if cfg!(windows) { "llama-server.exe" } else { "llama-server" }
+}
+
 #[derive(Parser, Debug)]
 #[command(name = "ce-infer-worker", about = "ce-infer per-node inference server")]
 struct Args {
     /// Local CE node HTTP API base URL.
     #[arg(long, default_value = ce_rs::DEFAULT_BASE_URL)]
     node: String,
-    /// Engine binary (llama.cpp server). Bundled per-platform by the installer.
-    #[arg(long, default_value = "llama-server")]
+    /// Engine binary (llama.cpp server). Bundled per-platform by the installer. Defaults to
+    /// `llama-server` on unix and `llama-server.exe` on Windows so a bare default resolves the
+    /// bundled executable on each platform.
+    #[arg(long, default_value = default_engine())]
     engine: String,
     /// Force the mock backend (no GGUF / no engine needed). Auto-enabled when no model is published.
     #[arg(long)]

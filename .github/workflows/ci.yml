@@ -1,0 +1,65 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+env:
+  CARGO_TERM_COLOR: always
+  RUST_BACKTRACE: 1
+
+jobs:
+  # Build + test on all three desktop platforms. ce-infer is an APP that path-depends on the CE
+  # substrate (ce-rs, and ce-cap/ce-identity inside the ce repo), so CI lays the repos out as the
+  # workspace expects: ce-infer next to ce-rs and ce under $GITHUB_WORKSPACE, with cargo run from
+  # the ce-infer subdir. The unix code path is byte-identical across runners; Windows exercises the
+  # cfg(windows) branches (home dir resolution, engine name, placeholder-child spawn).
+  test:
+    name: Build + Test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    defaults:
+      run:
+        working-directory: ce-infer
+    steps:
+      # This repo — checked out into ce-infer/ so the ../ce-rs and ../ce path deps resolve.
+      - name: Checkout ce-infer
+        uses: actions/checkout@v4
+        with:
+          path: ce-infer
+
+      # Sibling: the CE Rust SDK (path dep `ce-rs = { path = "../ce-rs" }`).
+      - name: Checkout ce-rs
+        uses: actions/checkout@v4
+        with:
+          repository: ce-net/ce-rs
+          path: ce-rs
+
+      # Sibling: the CE node repo, which provides ce-cap and ce-identity
+      # (`path = "../ce/crates/ce-cap"` and `../ce/crates/ce-identity`).
+      - name: Checkout ce
+        uses: actions/checkout@v4
+        with:
+          repository: ce-net/ce
+          path: ce
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      # Cross-platform cargo cache (handles Windows/macOS/Linux paths correctly). Keyed on the
+      # ce-infer workspace so all three sibling checkouts share one cache per OS.
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: ce-infer
+
+      - name: Build
+        run: cargo build --workspace --verbose
+
+      - name: Test
+        run: cargo test --workspace --verbose
