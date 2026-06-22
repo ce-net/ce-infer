@@ -26,3 +26,5 @@ sysinfo.workspace = true
 
 [dev-dependencies]
 tokio.workspace = true
+proptest.workspace = true
+bincode.workspace = true

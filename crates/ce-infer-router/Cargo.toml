@@ -42,3 +42,4 @@ hex.workspace = true
 anyhow.workspace = true
 futures.workspace = true
 tokio.workspace = true
+proptest.workspace = true

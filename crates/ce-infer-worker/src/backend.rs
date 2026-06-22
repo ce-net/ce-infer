@@ -314,4 +314,66 @@ mod tests {
         // The streamed tokens reconstruct the text exactly.
         assert_eq!(completion.tokens().concat(), completion.text);
     }
+
+    #[test]
+    fn empty_completion_yields_no_tokens() {
+        let c = Completion { text: String::new(), token_count: 0, finish_reason: "stop".into() };
+        assert!(c.tokens().is_empty(), "an empty completion streams nothing");
+    }
+
+    #[test]
+    fn tokens_preserve_unicode_and_reconstruct_exactly() {
+        // Multi-byte chars and a trailing word without a space must reconstruct byte-for-byte.
+        let c = Completion { text: "café au lait — déjà vu".into(), token_count: 0, finish_reason: "stop".into() };
+        assert_eq!(c.tokens().concat(), c.text);
+        // Each token boundary is a space, so the count == word count.
+        assert_eq!(c.tokens().len(), c.text.split(' ').count());
+    }
+
+    /// Failure injection: a backend pointed at a dead port must surface an Err (the worker maps this
+    /// to an `error` reply), not panic.
+    #[tokio::test]
+    async fn complete_against_dead_port_errors_cleanly() {
+        // Bind+drop a listener to obtain a port that is then closed (nothing listening).
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let port = listener.local_addr().unwrap().port();
+        drop(listener);
+        let srv = LlamaServer::attach(port).expect("attach placeholder");
+        let res = srv.complete(&req(None)).await;
+        assert!(res.is_err(), "a request to a dead engine must Err, not hang/panic");
+    }
+
+    /// A non-2xx HTTP status from the engine is treated as an error.
+    #[tokio::test]
+    async fn complete_maps_http_error_status_to_err() {
+        use axum::{Router, http::StatusCode, routing::post};
+        async fn boom() -> StatusCode { StatusCode::INTERNAL_SERVER_ERROR }
+        let app = Router::new().route("/v1/chat/completions", post(boom));
+        let listener = tokio::net::TcpListener::bind("127.0.0.1:0").await.unwrap();
+        let port = listener.local_addr().unwrap().port();
+        tokio::spawn(async move { let _ = axum::serve(listener, app).await; });
+        tokio::time::sleep(std::time::Duration::from_millis(80)).await;
+        let srv = LlamaServer::attach(port).expect("attach");
+        assert!(srv.complete(&req(None)).await.is_err(), "5xx from engine must be an Err");
+    }
+
+    /// The mock backend must NEVER echo PHI (the user content) verbatim, for arbitrary content.
+    #[test]
+    fn mock_never_echoes_arbitrary_user_content() {
+        for content in ["MRN 12345", "John Doe chest pain", "🩺 vitals", "select * from patients"] {
+            let r = InferRequest {
+                req_id: "r".into(),
+                op: Op::Chat,
+                model_id: "clinical-chat-8b".into(),
+                messages: vec![ChatMessage { role: "user".into(), content: content.into() }],
+                max_tokens: None,
+                stream: false,
+                caps: String::new(),
+                record_ref: "a".repeat(64),
+                receipt: None,
+            };
+            let c = mock_complete(&r);
+            assert!(!c.text.contains(content), "mock leaked content: {content}");
+        }
+    }
 }

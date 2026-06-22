@@ -38,6 +38,7 @@ toml = "0.8"
 hex = "0.4"
 sha2 = "0.10"
 bincode = "1"
+proptest = "1"
 sysinfo = "0.32"
 clap = { version = "4", features = ["derive"] }
 tokio = { version = "1", features = ["macros", "rt-multi-thread", "time", "signal"] }
